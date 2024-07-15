@@ -10,7 +10,7 @@ from utils.log import setup_logger
 from utils.ood_utils import run_ood_over_batch
 from utils.test_utils import get_measures
 from utils.stat_utils import multivar_separa 
-from test_baselines import run_eval
+# from test_baselines import run_eval
 
 from tensorflow import keras
 import tensorflow.keras.backend as K
@@ -42,9 +42,9 @@ def get_data(bs, ood=True):
     :ood: whether to load OOD data as well (False for baseline concept learning by Yeh et al.)
     """
 
-    TRAIN_DIR = "/nobackup/jihye/data/Animals_with_Attributes2/train"
-    VAL_DIR = "/nobackup/jihye/data/Animals_with_Attributes2/val"
-    TEST_DIR = "/nobackup/jihye/data/Animals_with_Attributes2/test"
+    TRAIN_DIR = "data/AwA2/train"
+    VAL_DIR = "data/AwA2/val"
+    TEST_DIR = "data/AwA2/test"
     if args.out_data == 'MSCOCO':
         OOD_DIR = "/nobackup/jihye/data/MSCOCO"
     elif args.out_data == 'augAwA':
@@ -177,8 +177,8 @@ def main():
     #print(train_generator.class_indices.items())
     #assert ('_OOD', 0) in val_generator.class_indices.items()
     #y_train = get_class_labels(train_loader, savepath='data/Animals_with_Attributes2/y_train.npy')
-    y_val = get_class_labels(val_loader, savepath='/nobackup/jihye/data/Animals_with_Attributes2/y_val.npy')
-    y_test = get_class_labels(test_loader, savepath='/nobackup/jihye/data/Animals_with_Attributes2/y_test.npy')
+    y_val = get_class_labels(val_loader, savepath='data/AwA2/y_val.npy')
+    y_test = get_class_labels(test_loader, savepath='data/AwA2/y_test.npy')
     
     # preds_cls_idx = y_test.argmax(axis=-1)
     # idx_to_cls = {v: k for k, v in test_generator.class_indices.items()}
@@ -186,10 +186,10 @@ def main():
     # filenames_to_cls = list(zip(test_generator.filenames, preds_cls))
 
 
-    # Loads model
+    # Loads model TODO: pretrain=True
     feature_model, predict_model = helper.load_model_inception_new(train_loader, val_loader, \
                batch_size=BATCH_SIZE, input_size=(224,224), pretrain=True, \
-               modelname='./results/Animals_with_Attributes2/inceptionv3_AwA2.h5', split_idx=-5)
+               modelname='./results/Animals_with_Attributes2/inceptionv3_AwA2.weights.h5', split_idx=-5)
     """
     #### check accuracy of feature_model -> predict_model
     logits_test = predict_model(feature_model.predict(test_loader))
@@ -206,7 +206,8 @@ def main():
     """
     
     ## Concept Learning
-    x, _ = test_loader.next()
+    x, _ = test_loader.__next__()
+    # x, _ = test_loader.next()
     f = feature_model(x[:10])
     # topic model: intermediate feature --> concept score --> recovered feature --> prediction (50 classes)
     topic_model_pr = concept_model.TopicModel(f, N_CONCEPT, THRESHOLD, predict_model, args.num_hidden)
@@ -357,7 +358,8 @@ ov.numpy()[:,None])
                 out_gen = datagen.flow_from_directory('/nobackup/jihye/data/MSCOCO_test',batch_size=150,target_size=(224,224),class_mode=None,shuffle=False)
             elif args.out_data == 'augAwA':
                 out_gen = datagen.flow_from_directory('/nobackup/jihye/data/AwA2-test-fractals',batch_size=150,target_size=(224,224),class_mode=None,shuffle=False)
-            _, _, thres, _ = run_eval(feature_model, predict_model, val_loader, out_gen, logger, args, 50)
+            # TODO
+            # _, _, thres, _ = run_eval(feature_model, predict_model, val_loader, out_gen, logger, args, 50)
         else:
             thres = None
 

@@ -33,7 +33,7 @@ from matplotlib import cm
 seed(0)
 # tf.compat.v1.set_random_seed(0)
 tf.random.set_seed(0)
-
+import os
 
 def copy_save_image(x_filename,f1,f2,a,b):
   # open the image
@@ -236,7 +236,7 @@ def prepare_inceptionV3(input_size=(224,224),
 
 
 def load_model_inception_new(train_generator, val_generator, pretrain=True, n_gpus=0,\
-               modelname='results/Animals_with_Attributes2/inceptionv3_AwA2.h5', \
+               modelname='results/Animals_with_Attributes2/inceptionv3_AwA2.weights.h5', \
                batch_size=256, input_size=(224,224), split_idx=-5):
 
   # tf.set_random_seed(1)
@@ -292,28 +292,68 @@ def load_model_inception_new(train_generator, val_generator, pretrain=True, n_gp
   # print('\n\noriginal model to be trained')
   # print(model.summary())
 
-  model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=1e-4),
+  model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.001), # 1e-4 
                 loss='categorical_crossentropy', metrics=['accuracy'])
   
 
   if pretrain:
-    model.load_weights(modelname, by_name=True)
+    model.load_weights(modelname)
     
     #### check accuracy of the trained model
     loss_val, acc_val = model.evaluate(val_generator)
     print('Loss of the trained original model: '+str(loss_val))
     print('Accuracy of the trained original model: '+str(acc_val))
 
-  else:
+  if 1: # else:
     # model.load_weights(modelname, by_name=True)
     _ = model.fit(
-        train_generator if not n_gpus else train_dataset,
-        validation_data=val_generator if not n_gpus else val_dataset,
-        epochs=20,
+        train_generator,
+        validation_data=val_generator,
+        epochs=5,
         verbose=1,
         shuffle=True,
         steps_per_epoch=len(train_generator.filenames)//batch_size)
+    
+    print("Saving weights (5 epochs)")
+    os.makedirs(os.path.dirname(modelname), exist_ok=True)
     model.save_weights(modelname)
+
+    _ = model.fit(
+        train_generator,
+        validation_data=val_generator,
+        epochs=5,
+        verbose=1,
+        shuffle=True,
+        steps_per_epoch=len(train_generator.filenames)//batch_size)
+    
+    print("Saving weights (10 epochs)")
+    os.makedirs(os.path.dirname(modelname), exist_ok=True)
+    model.save_weights(modelname)
+
+    _ = model.fit(
+        train_generator,
+        validation_data=val_generator,
+        epochs=5,
+        verbose=1,
+        shuffle=True,
+        steps_per_epoch=len(train_generator.filenames)//batch_size)
+    
+    print("Saving weights (15 epochs)")
+    os.makedirs(os.path.dirname(modelname), exist_ok=True)
+    model.save_weights(modelname)
+
+    _ = model.fit(
+        train_generator,
+        validation_data=val_generator,
+        epochs=5,
+        verbose=1,
+        shuffle=True,
+        steps_per_epoch=len(train_generator.filenames)//batch_size)
+    
+    print("Saving weights (20 epochs)")
+    os.makedirs(os.path.dirname(modelname), exist_ok=True)
+    model.save_weights(modelname)
+
 
   for layer in model.layers:
     layer.trainable = False
