@@ -25,8 +25,8 @@ def plot_stats(scores_in, scores_out, savename):
     plt.figure(figsize=(12, 4))
     fig = plt.figure()
     ax = plt.subplot(111)
-    sns.kdeplot(scores_in, color='blue')
-    sns.kdeplot(scores_out, color='red')
+    sns.histplot(scores_in, color='blue') # TODO: kdeplot
+    sns.histplot(scores_out, color='red')
     #fig = plt.gcf()
     ax.legend(['in-distribution (test)', 'out-of-distribution'], frameon=False)
     plt.tight_layout()

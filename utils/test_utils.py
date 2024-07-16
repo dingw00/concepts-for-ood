@@ -85,7 +85,7 @@ def prepare_data(args, logger):
     OOD_DATASET = args.out_data
     
     if OOD_DATASET == 'MSCOCO':
-        OOD_DIR = '/nobackup/jihye/data/MSCOCO_test'
+        OOD_DIR = 'data/MSCOCO/test'
         out_gen = datagen.flow_from_directory(OOD_DIR,
                                             batch_size=args.batch_size,
                                             target_size=(224,224),

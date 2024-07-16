@@ -292,9 +292,11 @@ def load_model_inception_new(train_generator, val_generator, pretrain=True, n_gp
   # print('\n\noriginal model to be trained')
   # print(model.summary())
 
-  model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.001), # 1e-4 
-                loss='categorical_crossentropy', metrics=['accuracy'])
-  
+  for layer in model.layers:
+      layer.trainable = True
+
+  model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=1e-4), # 1e-4 
+                loss='categorical_crossentropy', metrics=['accuracy'])  
 
   if pretrain:
     model.load_weights(modelname)
@@ -304,56 +306,18 @@ def load_model_inception_new(train_generator, val_generator, pretrain=True, n_gp
     print('Loss of the trained original model: '+str(loss_val))
     print('Accuracy of the trained original model: '+str(acc_val))
 
-  if 1: # else:
+  else:
     # model.load_weights(modelname, by_name=True)
     _ = model.fit(
         train_generator,
         validation_data=val_generator,
-        epochs=5,
+        epochs=20,
         verbose=1,
-        shuffle=True,
-        steps_per_epoch=len(train_generator.filenames)//batch_size)
-    
-    print("Saving weights (5 epochs)")
-    os.makedirs(os.path.dirname(modelname), exist_ok=True)
-    model.save_weights(modelname)
-
-    _ = model.fit(
-        train_generator,
-        validation_data=val_generator,
-        epochs=5,
-        verbose=1,
-        shuffle=True,
-        steps_per_epoch=len(train_generator.filenames)//batch_size)
-    
-    print("Saving weights (10 epochs)")
-    os.makedirs(os.path.dirname(modelname), exist_ok=True)
-    model.save_weights(modelname)
-
-    _ = model.fit(
-        train_generator,
-        validation_data=val_generator,
-        epochs=5,
-        verbose=1,
-        shuffle=True,
-        steps_per_epoch=len(train_generator.filenames)//batch_size)
-    
-    print("Saving weights (15 epochs)")
-    os.makedirs(os.path.dirname(modelname), exist_ok=True)
-    model.save_weights(modelname)
-
-    _ = model.fit(
-        train_generator,
-        validation_data=val_generator,
-        epochs=5,
-        verbose=1,
-        shuffle=True,
-        steps_per_epoch=len(train_generator.filenames)//batch_size)
+        shuffle=True)
     
     print("Saving weights (20 epochs)")
     os.makedirs(os.path.dirname(modelname), exist_ok=True)
     model.save_weights(modelname)
-
 
   for layer in model.layers:
     layer.trainable = False
@@ -370,7 +334,7 @@ def load_model_inception_new(train_generator, val_generator, pretrain=True, n_gp
   predict_model = Model(inputs=mixed10_2, outputs=output_tensor_2)
   predict_model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=1e-4),
                         loss='categorical_crossentropy', metrics=['accuracy'])
-  #print(feature_model.summary())
+  # print(feature_model.summary())
   print(predict_model.summary())
 
   
