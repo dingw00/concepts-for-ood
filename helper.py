@@ -5,7 +5,6 @@ from __future__ import division
 from __future__ import print_function
 
 import pickle
-import splitfolders
 from absl import app
 import tensorflow as tf
 from tensorflow import keras
@@ -39,13 +38,13 @@ def copy_save_image(x_filename,f1,f2,a,b):
   # open the image
   # Image1 = Image.fromarray(x.astype('uint8'))
   Image1 = Image.open(x_filename)
-  Image1.show()
+  # Image1.show()
   if f1:
     Image1.save(f1)
   # make a copy the image so that
   # the original image does not get affected
   Image1copy = Image1.copy()
-  Image1copy = Image1copy.resize((224,224), Image.ANTIALIAS)
+  Image1copy = Image1copy.resize((224,224), Image.LANCZOS)
   """
   left = 32*b 
   right = left+116
@@ -68,7 +67,7 @@ def copy_save_image(x_filename,f1,f2,a,b):
   new_size = (receptive_size,receptive_size) #(100,100)
   new_im = Image.new("RGB", new_size)
   new_im.paste(region, (1,1))
-  new_im.show()
+  # new_im.show()
   new_im.save(f2)
 
 
@@ -86,7 +85,7 @@ def copy_save_image_all(x,f1,f2,a,b):
   # make a copy the image so that
   # the original image does not get affected
   Image1copy = Image1.copy()
-  Image1copy = Image1copy.resize((240,240), Image.ANTIALIAS)
+  Image1copy = Image1copy.resize((240,240), Image.LANCZOS)
   left = 32*b
   right = left+116
   top = 32*a
@@ -176,16 +175,10 @@ def split_by_name(model, input_tensor, layer_name):
     return bottom_model, top_model
 
 
-def prepare_data(datadir="./data/Animals_with_Attributes2/JPEGImages", \
-                savedir="./data/Animals_with_Attributes2"):
-  # install split-folders with progress visualization option: pip install split-folders tqdm
-  splitfolders.ratio(datadir, output=savedir, seed=1337, ratio=(.8, .1, .1), group_prefix=None) # default values
-
-
 def prepare_inceptionV3(input_size=(224,224),
                         modelname='results/Animals_with_Attributes2/inceptionv3_AwA2.h5'
                        ):
-  tf.random.set_seed(1)
+  tf.random.set_seed(100)
   input_tensor = tf.keras.Input(shape=(input_size[0], input_size[1], 3))
   resized_images = layers.Lambda(lambda image: tf.image.resize(image, (224, 224)))(input_tensor)
   base_model = tf.keras.applications.InceptionV3(weights='imagenet',
@@ -240,7 +233,7 @@ def load_model_inception_new(train_generator, val_generator, pretrain=True, n_gp
                batch_size=256, input_size=(224,224), split_idx=-5):
 
   # tf.set_random_seed(1)
-  tf.random.set_seed(1)
+  tf.random.set_seed(0)
   input_tensor = tf.keras.Input(shape=(input_size[0], input_size[1], 3))
   if not input_size[0] == 224:
       #input_tensor = layers.Lambda(lambda image: tf.image.resize(image, (224, 224)))(input_tensor)
@@ -289,35 +282,47 @@ def load_model_inception_new(train_generator, val_generator, pretrain=True, n_gp
   output_tensor_2 = fc2(dropout_out_2)
 
   model = tf.keras.models.Model(inputs=input_tensor, outputs=softmax_out)
-  # print('\n\noriginal model to be trained')
-  # print(model.summary())
 
-  for layer in model.layers:
-      layer.trainable = True
+  # for layer in model.layers:
+  #     layer.trainable = True
 
   model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=1e-4), # 1e-4 
                 loss='categorical_crossentropy', metrics=['accuracy'])  
+  print('\n\noriginal model to be trained')
+  # print(model.summary())
 
   if pretrain:
     model.load_weights(modelname)
     
-    #### check accuracy of the trained model
-    loss_val, acc_val = model.evaluate(val_generator)
-    print('Loss of the trained original model: '+str(loss_val))
-    print('Accuracy of the trained original model: '+str(acc_val))
+    # #### check accuracy of the trained model
+    # loss_val, acc_val = model.evaluate(val_generator)
+    # print('Loss of the trained original model: '+str(loss_val))
+    # print('Accuracy of the trained original model: '+str(acc_val))
 
-  else:
+  if 1: # else:
     # model.load_weights(modelname, by_name=True)
     _ = model.fit(
         train_generator,
         validation_data=val_generator,
-        epochs=20,
+        epochs=10,
+        verbose=1,
+        shuffle=True)
+    
+    print("Saving weights (10 epochs)")
+    os.makedirs(os.path.dirname(modelname), exist_ok=True)
+    model.save_weights(modelname)
+
+    _ = model.fit(
+        train_generator,
+        validation_data=val_generator,
+        epochs=10,
         verbose=1,
         shuffle=True)
     
     print("Saving weights (20 epochs)")
     os.makedirs(os.path.dirname(modelname), exist_ok=True)
     model.save_weights(modelname)
+
 
   for layer in model.layers:
     layer.trainable = False
@@ -339,5 +344,3 @@ def load_model_inception_new(train_generator, val_generator, pretrain=True, n_gp
 
   
   return feature_model, predict_model
-
-

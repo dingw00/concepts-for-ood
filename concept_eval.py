@@ -533,7 +533,7 @@ def save_images(filepaths, figname, k=5):
     count = 0
     np.random.shuffle(filepaths)
     for f in filepaths:
-        img = Image.open(f).resize((100,100), Image.ANTIALIAS)
+        img = Image.open(f).resize((100,100), PIL.Image.LANCZOS)
         axes[count].imshow(img)
         #ax2.set_title("ID image", size=10, color='b')
         axes[count].axis('off')

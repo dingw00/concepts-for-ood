@@ -40,7 +40,6 @@ from sklearn.linear_model import LogisticRegression
 import tensorflow as tf
 from inception_v3 import conv2d_bn
 from PIL import Image
-import cv2
 backend = keras.backend
 layers = keras.layers
 models = keras.models
@@ -625,7 +624,7 @@ def copy_save_image(f1,f2,a,b,da,db):
   # make a copy the image so that
   # the original image does not get affected
   Image1copy = Image1.copy()
-  Image1copy = Image1copy.resize((299,299), Image.ANTIALIAS)
+  Image1copy = Image1copy.resize((299,299), Image.LANCZOS)
   left = int(172.0/17*b) 
   right = left+127
   if right>=299:
@@ -645,7 +644,7 @@ def copy_save_image_early(f1,f2,a,b,da,db):
   # make a copy the image so that
   # the original image does not get affected
   Image1copy = Image1.copy()
-  Image1copy = Image1copy.resize((299,299), Image.ANTIALIAS)
+  Image1copy = Image1copy.resize((299,299), Image.LANCZOS)
   left = int((299-95)/35*b) 
   right = left+95
   if right>=299:

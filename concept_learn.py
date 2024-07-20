@@ -35,7 +35,7 @@ import sys
 import time
 
 
-def get_data(bs, ood=True):
+def get_data(bs, args, ood=True):
     """
     prepare data loaders for ID and OOD data (train/test)
     :param bs: batch size
@@ -46,9 +46,9 @@ def get_data(bs, ood=True):
     VAL_DIR = "data/AwA2/val"
     TEST_DIR = "data/AwA2/test"
     if args.out_data == 'MSCOCO':
-        OOD_DIR = "/nobackup/jihye/data/MSCOCO"
+        OOD_DIR = "data/MSCOCO"
     elif args.out_data == 'augAwA':
-        OOD_DIR = "/nobackup/jihye/data/AwA2-train-fractals"
+        OOD_DIR = "data/AwA2-train-fractals"
 
     TARGET_SIZE = (224, 224)
     BATCH_SIZE = bs
@@ -148,9 +148,11 @@ def get_args():
 
     return parser.parse_args()
 
+
 def main():
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
 
+    args = get_args()
     #if not os.path.exists(args.output_dir):
     #    os.makedirs(args.output_dir)
 
@@ -163,33 +165,29 @@ def main():
     trained = args.trained
     N_CONCEPT = args.num_concepts
     offset = args.offset
-    topic_modelpath = os.path.join(args.logdir, args.name,'topic_epoch{}.h5'.format(offset))
+    topic_modelpath = os.path.join(args.logdir, args.name,'topic_epoch{}.weights.h5'.format(offset))
     #topic_modelpath = os.path.join(args.logdir, args.name,'topic_latest.h5')
     topic_savepath = os.path.join(args.logdir, args.name,'topic_vec_inceptionv3.npy')
 
     logger = setup_logger(args)
 
-    train_loader, val_loader, test_loader, ood_loader =  get_data(BATCH_SIZE, ood=USE_OOD)
+    train_loader, val_loader, test_loader, ood_loader =  get_data(BATCH_SIZE, args, ood=USE_OOD)
 
-    ## splitting AwA2 data into train/val/test sets
-    # helper.prepare_data()
-    
     #print(train_generator.class_indices.items())
     #assert ('_OOD', 0) in val_generator.class_indices.items()
     #y_train = get_class_labels(train_loader, savepath='data/Animals_with_Attributes2/y_train.npy')
     y_val = get_class_labels(val_loader, savepath='data/AwA2/y_val.npy')
     y_test = get_class_labels(test_loader, savepath='data/AwA2/y_test.npy')
-    
+
     # preds_cls_idx = y_test.argmax(axis=-1)
     # idx_to_cls = {v: k for k, v in test_generator.class_indices.items()}
     # preds_cls = np.vectorize(idx_to_cls.get)(preds_cls_idx)
     # filenames_to_cls = list(zip(test_generator.filenames, preds_cls))
 
-
-    # Loads model TODO: pretrain=True
+    # Loads model
     feature_model, predict_model = helper.load_model_inception_new(train_loader, val_loader, \
-               batch_size=BATCH_SIZE, input_size=(224,224), pretrain=True, \
-               modelname='./results/Animals_with_Attributes2/inceptionv3_AwA2.weights.h5', split_idx=-5)
+            batch_size=BATCH_SIZE, input_size=(224,224), pretrain=True, \
+            modelname='./results/AwAt2/inceptionv3_AwA2.weights.h5', split_idx=-5)
     """
     #### check accuracy of feature_model -> predict_model
     logits_test = predict_model(feature_model.predict(test_loader))
@@ -433,6 +431,4 @@ ov.numpy()[:,None])
 
 
 if __name__ == '__main__':
-    global args
-    args = get_args()
     main()

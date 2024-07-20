@@ -121,7 +121,7 @@ def prepare_data(args, logger):
     elif OOD_DATASET == 'svhn':
         #THRESHOLD_energy = np.linspace(5.5, 7.0, 30)
         #THRESHOLD_smx = np.linspace(0.4, 0.55, 20)
-        svhn_data = sio.loadmat('/nobackup/jihye/data/SVHN_test_32x32.mat')
+        svhn_data = sio.loadmat('data/SVHN_test_32x32.mat')
         x_out = svhn_data['X'].astype('float32') #/ 255.0
         x_out = np.transpose(x_out, (3,0,1,2)) # dim = (N_imgs, 32, 32, 3)
         y_out = svhn_data['y'].astype('float32')-1 # label from 0 to 9
@@ -130,43 +130,43 @@ def prepare_data(args, logger):
         out_gen = datagen.flow(x_out, y_out, batch_size=args.batch_size, shuffle=False)
 
     elif OOD_DATASET == 'AwA2-test-pgd':
-        OOD_DIR = '/nobackup/jihye/data/AwA2-test-pgd'
+        OOD_DIR = 'data/AwA2-test-pgd'
         out_gen = datagen.flow_from_directory(OOD_DIR,
                                             batch_size=args.batch_size,                                                                                         target_size=(224,224), #(32,32)
                                             class_mode=None, shuffle=False)
 
     elif OOD_DATASET == 'AwA2-test-fractals':
-        OOD_DIR = '/nobackup/jihye/data/AwA2-test-fractals'
+        OOD_DIR = 'data/AwA2-test-fractals'
         out_gen = datagen.flow_from_directory(OOD_DIR,
                                             batch_size=args.batch_size,                                                                                         target_size=(224,224), #(32,32)
                                             class_mode=None, shuffle=False)
     elif OOD_DATASET == 'Animals':
-        OOD_DIR = '/nobackup/jihye/data/Animals'
+        OOD_DIR = 'data/Animals'
         out_gen = datagen.flow_from_directory(OOD_DIR,
                                             batch_size=args.batch_size,                                                                                         target_size=(224,224), #(32,32)
                                             class_mode=None, shuffle=False)
     elif OOD_DATASET == 'iNaturalist':
-        OOD_DIR = '/nobackup/jihye/data/iNaturalist'
+        OOD_DIR = 'data/iNaturalist'
         out_gen = datagen.flow_from_directory(OOD_DIR,
                                               batch_size=args.batch_size,
                                               target_size=(224,224), #(32,32)
                                               class_mode=None, shuffle=False)
 
     elif OOD_DATASET == 'Textures':
-        OOD_DIR = '/nobackup/jihye/data/Textures'
+        OOD_DIR = 'data/Textures'
         out_gen = datagen.flow_from_directory(OOD_DIR,
                                               batch_size=args.batch_size,
                                               target_size=(224,224),
                                               class_mode='categorical', shuffle=False)
     elif OOD_DATASET == 'Places':
-        OOD_DIR = '/nobackup/jihye/data/Places'
+        OOD_DIR = 'data/Places'
         out_gen = datagen.flow_from_directory(OOD_DIR,
                                                 batch_size=args.batch_size,
                                                 target_size=(224,224), #(32,32)
                                                 class_mode=None, shuffle=False)
 
     elif OOD_DATASET == 'SUN':
-        OOD_DIR = '/nobackup/jihye/data/SUN'
+        OOD_DIR = 'data/SUN'
         out_gen = datagen.flow_from_directory(OOD_DIR,
                                             batch_size=args.batch_size,
                                             target_size=(224,224), #(32,32)
