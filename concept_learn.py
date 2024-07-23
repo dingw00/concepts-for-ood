@@ -235,7 +235,6 @@ def main():
         f_in = feature_model(x_in)
         f_in_n = K.l2_normalize(f_in,axis=(3))
 
-
         obj_terms = {} # terms in the objective function
         COEFF_CONCEPT = args.coeff_concept #10 -> 5 -> 1 
         with tf.GradientTape() as tape:
@@ -342,8 +341,8 @@ ov.numpy()[:,None])
         logger.info(f'topic model loaded from {topic_modelpath}')
     if not trained:
         for layer in topic_model_pr.layers[:-1]:
-            #print(layer.trainable)
             layer.trainable = True
+        print(topic_model_pr.layers[-1].trainable)
 
         # check all weights are included in trainable_variables
         # for i, var in enumerate(topic_model_pr.trainable_variables):

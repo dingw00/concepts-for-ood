@@ -299,29 +299,29 @@ def load_model_inception_new(train_generator, val_generator, pretrain=True, n_gp
     # print('Loss of the trained original model: '+str(loss_val))
     # print('Accuracy of the trained original model: '+str(acc_val))
 
-  if 1: # else:
-    # model.load_weights(modelname, by_name=True)
-    _ = model.fit(
-        train_generator,
-        validation_data=val_generator,
-        epochs=10,
-        verbose=1,
-        shuffle=True)
+  # if 1: # else:
+  #   # model.load_weights(modelname, by_name=True)
+  #   _ = model.fit(
+  #       train_generator,
+  #       validation_data=val_generator,
+  #       epochs=10,
+  #       verbose=1,
+  #       shuffle=True)
     
-    print("Saving weights (10 epochs)")
-    os.makedirs(os.path.dirname(modelname), exist_ok=True)
-    model.save_weights(modelname)
+  #   print("Saving weights (10 epochs)")
+  #   os.makedirs(os.path.dirname(modelname), exist_ok=True)
+  #   model.save_weights(modelname)
 
-    _ = model.fit(
-        train_generator,
-        validation_data=val_generator,
-        epochs=10,
-        verbose=1,
-        shuffle=True)
+  #   _ = model.fit(
+  #       train_generator,
+  #       validation_data=val_generator,
+  #       epochs=10,
+  #       verbose=1,
+  #       shuffle=True)
     
-    print("Saving weights (20 epochs)")
-    os.makedirs(os.path.dirname(modelname), exist_ok=True)
-    model.save_weights(modelname)
+  #   print("Saving weights (20 epochs)")
+  #   os.makedirs(os.path.dirname(modelname), exist_ok=True)
+  #   model.save_weights(modelname)
 
 
   for layer in model.layers:
