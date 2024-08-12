@@ -300,7 +300,6 @@ def load_model_inception_new(train_generator, val_generator, pretrain=True, n_gp
     # print('Accuracy of the trained original model: '+str(acc_val))
 
   # if 1: # else:
-  #   # model.load_weights(modelname, by_name=True)
   #   _ = model.fit(
   #       train_generator,
   #       validation_data=val_generator,
@@ -323,6 +322,61 @@ def load_model_inception_new(train_generator, val_generator, pretrain=True, n_gp
   #   os.makedirs(os.path.dirname(modelname), exist_ok=True)
   #   model.save_weights(modelname)
 
+  # # robustness training
+  # def gaussian_blur(img, kernel_size=11, sigma=5):
+  #   def gauss_kernel(channels, kernel_size, sigma):
+  #       ax = tf.range(-kernel_size // 2 + 1.0, kernel_size // 2 + 1.0)
+  #       xx, yy = tf.meshgrid(ax, ax)
+  #       kernel = tf.exp(-(xx ** 2 + yy ** 2) / (2.0 * sigma ** 2))
+  #       kernel = kernel / tf.reduce_sum(kernel)
+  #       kernel = tf.tile(kernel[..., tf.newaxis], [1, 1, channels])
+  #       return kernel
+
+  #   gaussian_kernel = gauss_kernel(tf.shape(img)[-1], kernel_size, sigma)
+  #   gaussian_kernel = gaussian_kernel[..., tf.newaxis]
+
+  #   return tf.nn.depthwise_conv2d(img, gaussian_kernel, [1, 1, 1, 1],
+  #                                 padding='SAME', data_format='NHWC')
+  
+  # os.makedirs(os.path.dirname(modelname), exist_ok=True)
+  # for ep in range(50):
+  #   print("Training epoch", ep)
+  #   for step, (x, y) in enumerate(train_generator):
+  #     print("Step", step)
+  #     if step == len(train_generator):
+  #        break
+
+  #     s = np.random.uniform(0, 1, size=6) > 0.5
+  #     if s[0]:
+  #       x= tf.image.random_hue(x, 0.1, seed=None)
+  #     if s[1]:
+  #       x = tf.image.random_brightness(x, 0.3, seed=None)
+  #     if s[2]:
+  #       x = tf.image.random_contrast(x, 0.7, 1)
+  #     if s[3]:
+  #       saturation_factor = np.random.uniform(0.5, 1)
+  #       x = tf.image.adjust_saturation(x, saturation_factor)
+  #     if s[4]:
+  #       sigma = np.random.uniform(0.2, 0.8)
+  #       x = gaussian_blur(x, kernel_size=10, sigma=sigma)
+  #     if s[5]:
+  #       x += np.random.uniform(0, 0.1, size=x.shape)
+
+      # _ = model.fit(
+      #     x, y, batch_size=batch_size,
+      #     epochs=1,
+      #     verbose=1,
+      #     shuffle=True)
+  
+    # print(f"Saving weights, epoch {ep}")
+    # model.save_weights(modelname.replace(".weights.h5", f"_rob_ep_{ep}.weights.h5"))
+
+    #### check accuracy of the trained model
+    # if ep % 2 == 0:
+    #   loss_val, acc_val = model.evaluate(val_generator)
+    #   print('Loss of the trained original model: '+str(loss_val))
+    #   print('Accuracy of the trained original model: '+str(acc_val))
+
 
   for layer in model.layers:
     layer.trainable = False
@@ -340,7 +394,77 @@ def load_model_inception_new(train_generator, val_generator, pretrain=True, n_gp
   predict_model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=1e-4),
                         loss='categorical_crossentropy', metrics=['accuracy'])
   # print(feature_model.summary())
-  print(predict_model.summary())
+  # print(predict_model.summary())
 
   
   return feature_model, predict_model
+
+
+
+def load_model_inception_mixed5c(train_generator, val_generator, pretrain=True, n_gpus=0,\
+               modelname='results/Animals_with_Attributes2/inceptionv3_AwA2.weights.h5', \
+               batch_size=256, input_size=(224,224), split_idx=-5):
+
+  # tf.set_random_seed(1)
+  tf.random.set_seed(0)
+  input_tensor = tf.keras.Input(shape=(input_size[0], input_size[1], 3))
+  if not input_size[0] == 224:
+      #input_tensor = layers.Lambda(lambda image: tf.image.resize(image, (224, 224)))(input_tensor)
+      resized_image = layers.Lambda(lambda image: tf.image.resize(image, (224, 224)))(input_tensor)
+      #resized_images = tf.keras.applications.inception_v3.preprocess_input(resized_images)
+  base_model = tf.keras.applications.InceptionV3(weights='imagenet',
+                                         include_top=False,
+                                         input_tensor=input_tensor if input_size[0] == 224 else resized_image,
+                                         pooling='max')
+  for layer in base_model.layers:
+      layer.trainable = False
+  
+  output_from_model = base_model.layers[-2].output #mixed10
+  global_pool = base_model.layers[-1]
+  global_pool_out = global_pool(output_from_model)
+  flatten_out = layers.Flatten()(global_pool_out)
+  fc1 = layers.Dense(units=256, activation='relu',
+          # kernel_initializer=tf.keras.initializer.he_normal(),
+          kernel_regularizer=tf.keras.regularizers.l2())
+  fc1_out = fc1(flatten_out)
+  dropout = layers.Dropout(0.5)
+  dropout_out = dropout(fc1_out)
+    
+  fc2 = layers.Dense(units=50, # 50 classes
+                    activation=None,
+                    kernel_regularizer=tf.keras.regularizers.l2())
+  output_tensor = fc2(dropout_out)  # NOTE: logits NOT softmax output!!!!!
+  softmax = layers.Activation('softmax')
+  softmax_out = softmax(output_tensor)
+
+  feature_output = base_model.get_layer("mixed1").output
+
+  model = tf.keras.models.Model(inputs=input_tensor, outputs=softmax_out)
+
+  model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=1e-4), # 1e-4 
+                loss='categorical_crossentropy', metrics=['accuracy'])  
+  print('\n\noriginal model to be trained')
+  # print(model.summary())
+
+  if pretrain:
+    model.load_weights(modelname)
+    
+    # #### check accuracy of the trained model
+    # loss_val, acc_val = model.evaluate(val_generator)
+    # print('Loss of the trained original model: '+str(loss_val))
+    # print('Accuracy of the trained original model: '+str(acc_val))
+
+  for layer in model.layers:
+    layer.trainable = False
+  
+  feature_model = Model(inputs=input_tensor, outputs=feature_output)
+  predict_model = Model(inputs=feature_output, outputs=output_tensor)
+  predict_model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=1e-4),
+                        loss='categorical_crossentropy', metrics=['accuracy'])
+  # print(feature_model.summary())
+  # print(predict_model.summary())
+
+  
+  return feature_model, predict_model
+
+

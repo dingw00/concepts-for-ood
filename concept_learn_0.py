@@ -133,7 +133,7 @@ def get_args():
     parser.add_argument('--separability', '-separability', action='store_true', help='whether to use separability regularization')
     parser.add_argument('--coeff_feat', type=float, default=0.1, help='coefficient for loss_l2')
     parser.add_argument('--coeff_cosine', type=float, default=1., help='coefficient for loss_cos')
-    parser.add_argument('--coeff_score', type=float, default=0., help='coefficient for loss_score')
+    parser.add_argument('--coeff_score', type=float, default=1., help='coefficient for loss_score')
     parser.add_argument('--coeff_concept', type=float, default=10., help='coefficient for loss_coherency and loss_similarity')
     parser.add_argument('--coeff_separa', type=float, default=10., help='coefficient for loss_separa')
     parser.add_argument('--num_hidden', type=int, default=2, help='number of hidden layers for mapping g')
@@ -150,9 +150,12 @@ def get_args():
 
 
 def main():
-    os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
 
     args = get_args()
+
+    os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
+
+    
     #if not os.path.exists(args.output_dir):
     #    os.makedirs(args.output_dir)
 

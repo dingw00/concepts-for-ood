@@ -153,20 +153,20 @@ def prepare_data(args, logger):
                                               class_mode=None, shuffle=False)
 
     elif OOD_DATASET == 'Textures':
-        OOD_DIR = 'data/Textures'
+        OOD_DIR = 'data/Textures/test'
         out_gen = datagen.flow_from_directory(OOD_DIR,
                                               batch_size=args.batch_size,
                                               target_size=(224,224),
                                               class_mode='categorical', shuffle=False)
     elif OOD_DATASET == 'Places':
-        OOD_DIR = 'data/Places'
+        OOD_DIR = 'data/Places/test'
         out_gen = datagen.flow_from_directory(OOD_DIR,
                                                 batch_size=args.batch_size,
                                                 target_size=(224,224), #(32,32)
                                                 class_mode=None, shuffle=False)
 
     elif OOD_DATASET == 'SUN':
-        OOD_DIR = 'data/SUN'
+        OOD_DIR = 'data/SUN/test'
         out_gen = datagen.flow_from_directory(OOD_DIR,
                                             batch_size=args.batch_size,
                                             target_size=(224,224), #(32,32)
