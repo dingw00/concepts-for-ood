@@ -146,7 +146,7 @@ def prepare_data(args, logger):
                                             batch_size=args.batch_size,                                                                                         target_size=(224,224), #(32,32)
                                             class_mode=None, shuffle=False)
     elif OOD_DATASET == 'iNaturalist':
-        OOD_DIR = 'data/iNaturalist'
+        OOD_DIR = 'data/iNaturalist/test'
         out_gen = datagen.flow_from_directory(OOD_DIR,
                                               batch_size=args.batch_size,
                                               target_size=(224,224), #(32,32)
@@ -157,7 +157,7 @@ def prepare_data(args, logger):
         out_gen = datagen.flow_from_directory(OOD_DIR,
                                               batch_size=args.batch_size,
                                               target_size=(224,224),
-                                              class_mode='categorical', shuffle=False)
+                                              class_mode=None, shuffle=False)
     elif OOD_DATASET == 'Places':
         OOD_DIR = 'data/Places/test'
         out_gen = datagen.flow_from_directory(OOD_DIR,
@@ -417,3 +417,37 @@ class ConceptProfiles(unittest.TestCase):
         self.assertEqual(self.count, len(self.loader.filenames))
 
 
+def remove_duplicate_concepts(topic_vec, return_mapping=False, thr=0.95):
+    # Remove one concept vector if there are two vectors where the dot product is over 0.95
+    # topic_vec: dim=(dim_features, n_concepts) (2048, 70)
+    # print(np.shape(topic_vec))
+    n_concept = topic_vec.shape[1]
+    topic_vec_n = topic_vec/(np.linalg.norm(topic_vec,axis=0,keepdims=True)+1e-9)
+
+    topic_vec_n_dot = np.transpose(topic_vec_n) @ topic_vec_n - np.eye(n_concept)
+    dict_similar_topic = {}
+    idx_delete = set()
+    for i in range(n_concept):
+        ith_redundant_concepts = [j for j in range(n_concept) if topic_vec_n_dot[i][j] >= thr]
+        dict_similar_topic[i] = ith_redundant_concepts
+        
+        ith_redundant_concepts = [x for x in ith_redundant_concepts if x > i]
+        idx_delete.update(ith_redundant_concepts)
+    idx_delete = list(idx_delete)
+
+    topic_vec_r = np.delete(topic_vec, idx_delete, axis=1)
+
+
+    dict_topic_mapping = {}
+    count = 0
+    for i in range(n_concept):
+        if i in idx_delete:
+            dict_topic_mapping[i] = None
+        else:
+            dict_topic_mapping[i] = count
+            count += 1
+
+    if return_mapping:
+        return topic_vec_r, dict_similar_topic, dict_topic_mapping
+    else:
+        return topic_vec_r, dict_similar_topic
